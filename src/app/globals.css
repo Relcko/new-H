@@ -1,0 +1,166 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   RELCKO — Design Tokens (Tailwind v4 CSS-first config)
+   Trust · Innovation · Luxury · Simplicity
+   ========================================================================== */
+
+@theme {
+  /* --- Color: Ink (surfaces / voids) --- */
+  --color-ink-950: #050608;
+  --color-ink-900: #070809;
+  --color-ink-800: #0c0e13;
+  --color-ink-700: #111419;
+  --color-ink-600: #181b22;
+  --color-ink-500: #23272f;
+
+  /* --- Color: Mist (text / borders) --- */
+  --color-mist-500: #a3a8b4;
+  --color-mist-400: #878c99;
+  --color-mist-300: #565b67;
+  --color-mist-200: #363b46;
+  --color-mist-100: #1f232b;
+
+  /* --- Color: Platinum (primary accent — heritage) --- */
+  --color-platinum: #c9b299;
+  --color-platinum-bright: #e6d6ba;
+  --color-platinum-dim: #8d7c68;
+
+  /* --- Color: Signal (action / blockchain) --- */
+  --color-signal: #5eead4;
+  --color-signal-dim: #2dd4bf;
+
+  /* --- Color: Vault (numeric positive) --- */
+  --color-vault: #86e3a6;
+
+  /* --- Color: Ember (alert) --- */
+  --color-ember: #ff6b6b;
+
+  /* --- Typography --- */
+  --font-display: var(--font-fraunces), ui-serif, Georgia, "Times New Roman", serif;
+  --font-sans: var(--font-inter-tight), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, "SFMono-Regular", monospace;
+
+  /* --- Easing --- */
+  --ease-settle: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-cinematic: cubic-bezier(0.7, 0, 0.3, 1);
+  --ease-precise: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-depart: cubic-bezier(0.55, 0, 0.45, 1);
+
+  /* --- Radius --- */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
+  --radius-xl: 24px;
+  --radius-2xl: 32px;
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+
+@layer base {
+  * {
+    border-color: var(--color-mist-100);
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    background-color: var(--color-ink-950);
+    color: var(--color-mist-500);
+    scroll-behavior: auto;
+  }
+
+  body {
+    background-color: var(--color-ink-950);
+    background-image: radial-gradient(
+      130% 130% at 50% -10%,
+      #0b0d12 0%,
+      #070809 50%,
+      #040506 100%
+    );
+    color: var(--color-mist-500);
+    font-family: var(--font-sans);
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background-color: var(--color-platinum);
+    color: var(--color-ink-950);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    color: var(--color-platinum-bright);
+    font-weight: 400;
+    letter-spacing: -0.01em;
+  }
+
+  :focus-visible {
+    outline: 1px solid var(--color-platinum);
+    outline-offset: 3px;
+    border-radius: 1px;
+  }
+
+  /* Scrollbar — invisible by default; Lenis governs scroll */
+  ::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* ==========================================================================
+   Utilities
+   ========================================================================== */
+
+@layer utilities {
+  /* Cinematic display optical size for Fraunces */
+  .opsz-display {
+    font-variation-settings: "opsz" 144;
+  }
+  .opsz-text {
+    font-variation-settings: "opsz" 14;
+  }
+
+  /* Tabular figures for financial data */
+  .nums {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+}
+
+/* ==========================================================================
+   Keyframes
+   ========================================================================== */
+
+@keyframes scrollcue {
+  0% {
+    transform: translateY(-100%) scaleY(0.4);
+    opacity: 0;
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(250%) scaleY(1);
+    opacity: 0;
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "hero": {
+    "video": null,
+    "model": null,
+    "environment": null
+  },
+  "problem": {
+    "video": null,
+    "model": null
+  },
+  "solution": {},
+  "marketplace": {},
+  "roadmap": {}
+}
