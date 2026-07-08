@@ -3,7 +3,7 @@
    mutated per frame by design (R3F canonical pattern for shader time). */
 
 import * as THREE from "three";
-import { useLayoutEffect, useMemo, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useThreeSceneStore } from "@/lib/three/scene-store";
 import { useSceneStore } from "@/stores/scene-store";
@@ -59,16 +59,16 @@ export function HeroBuildings() {
           void main() {
             vUv = uv;
             #ifdef USE_INSTANCING
-              vec4 world = modelMatrix * instanceMatrix * vec4(position, 1.0);
+              vec4 worldPos = modelMatrix * instanceMatrix * vec4(position, 1.0);
               vSeed = instanceMatrix[3].x * 0.3 + instanceMatrix[3].z * 0.7;
               vNormal = normalize(mat3(modelMatrix * instanceMatrix) * normal);
             #else
-              vec4 world = modelMatrix * vec4(position, 1.0);
+              vec4 worldPos = modelMatrix * vec4(position, 1.0);
               vSeed = 0.0;
               vNormal = normalize(mat3(modelMatrix) * normal);
             #endif
-            vWorldPos = world.xyz;
-            gl_Position = projectionMatrix * viewMatrix * world;
+            vWorldPos = worldPos.xyz;
+            gl_Position = projectionMatrix * viewMatrix * worldPos;
           }
         `,
         fragmentShader: /* glsl */ `
@@ -114,6 +114,17 @@ export function HeroBuildings() {
       }),
     [],
   );
+
+  // The geometry + material are created outside R3F's ownership (passed via
+  // instancedMesh args). R3F only invokes `.dispose()` on the mesh itself, and
+  // InstancedMesh has none, so release the compiled program + attribute buffers
+  // explicitly on unmount to avoid leaking GPU resources between scenes.
+  useEffect(() => {
+    return () => {
+      geometry.dispose();
+      material.dispose();
+    };
+  }, [geometry, material]);
 
   useLayoutEffect(() => {
     const mesh = meshRef.current;

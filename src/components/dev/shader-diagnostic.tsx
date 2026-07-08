@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import * as THREE from "three";
 import { Canvas } from "@react-three/fiber";
+import { HolographicMaterial } from "@/components/materials";
 
 /**
  * ShaderDiagnostic — mounts each custom ShaderMaterial inside an isolated
@@ -11,19 +12,19 @@ import { Canvas } from "@react-three/fiber";
  */
 
 function TestHeroBuildings() {
-  return (
-    <instancedMesh args={[undefined, undefined, 1]}>
-      <boxGeometry args={[1, 1, 1]} />
-      <shaderMaterial
-        name="HeroBuildings"
-        uniforms={{
+  const geo = useMemo(() => new THREE.BoxGeometry(1, 1, 1), []);
+  const mat = useMemo(
+    () =>
+      new THREE.ShaderMaterial({
+        name: "HeroBuildings",
+        uniforms: {
           uTime: { value: 0 },
           uReveal: { value: 0 },
           uBase: { value: new THREE.Color("#0a0d14") },
           uWindow: { value: new THREE.Color("#c9b299") },
           uRim: { value: new THREE.Color("#5eead4") },
-        }}
-        vertexShader={`
+        },
+        vertexShader: /* glsl */ `
           varying vec2 vUv;
           varying vec3 vNormal;
           varying vec3 vWorldPos;
@@ -31,19 +32,19 @@ function TestHeroBuildings() {
           void main() {
             vUv = uv;
             #ifdef USE_INSTANCING
-              vec4 world = modelMatrix * instanceMatrix * vec4(position, 1.0);
+              vec4 worldPos = modelMatrix * instanceMatrix * vec4(position, 1.0);
               vSeed = instanceMatrix[3].x * 0.3 + instanceMatrix[3].z * 0.7;
               vNormal = normalize(mat3(modelMatrix * instanceMatrix) * normal);
             #else
-              vec4 world = modelMatrix * vec4(position, 1.0);
+              vec4 worldPos = modelMatrix * vec4(position, 1.0);
               vSeed = 0.0;
               vNormal = normalize(mat3(modelMatrix) * normal);
             #endif
-            vWorldPos = world.xyz;
-            gl_Position = projectionMatrix * viewMatrix * world;
+            vWorldPos = worldPos.xyz;
+            gl_Position = projectionMatrix * viewMatrix * worldPos;
           }
-        `}
-        fragmentShader={`
+        `,
+        fragmentShader: /* glsl */ `
           uniform float uTime;
           uniform float uReveal;
           uniform vec3 uBase;
@@ -83,20 +84,37 @@ function TestHeroBuildings() {
             col = mix(col, uBase * 0.5, isRoof);
             gl_FragColor = vec4(col, vis);
           }
-        `}
-        transparent
-      />
-    </instancedMesh>
+        `,
+        transparent: true,
+      }),
+    [],
   );
+  // The material + geometry are args-passed (not R3F-owned), so dispose them
+  // manually on unmount — InstancedMesh has no .dispose() for R3F to call.
+  useEffect(() => {
+    return () => {
+      geo.dispose();
+      mat.dispose();
+    };
+  }, [geo, mat]);
+  return <instancedMesh args={[geo, mat, 1]} />;
 }
 
 function TestParticleField() {
-  const positions = new Float32Array(3);
+  const geometry = useMemo(() => {
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(3), 3));
+    return geo;
+  }, []);
+  // <shaderMaterial> is R3F-owned (auto-disposed), but the geometry is
+  // args-passed to <points> (no .dispose()), so release it manually.
+  useEffect(() => {
+    return () => {
+      geometry.dispose();
+    };
+  }, [geometry]);
   return (
-    <points>
-      <bufferGeometry>
-        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
-      </bufferGeometry>
+    <points args={[geometry]}>
       <shaderMaterial
         name="ParticleField"
         uniforms={{
@@ -107,7 +125,7 @@ function TestParticleField() {
         }}
         transparent
         depthWrite={false}
-        vertexShader={`
+        vertexShader={/* glsl */ `
           uniform float uTime;
           uniform float uSize;
           varying float vDepth;
@@ -121,7 +139,7 @@ function TestParticleField() {
             gl_PointSize = uSize * 300.0 / vDepth;
           }
         `}
-        fragmentShader={`
+        fragmentShader={/* glsl */ `
           uniform vec3 uColor;
           uniform float uOpacity;
           void main() {
@@ -132,6 +150,20 @@ function TestParticleField() {
         `}
       />
     </points>
+  );
+}
+
+function TestHolographic() {
+  // Mounts the real extend()-registered <holographicMaterial> (a
+  // HolographicMaterialImpl subclass of ShaderMaterial) on a unit box so its
+  // fresnel + scanline shader compiles under the same WebGL2 context as the
+  // other custom materials. All resources here are JSX-owned (R3F disposes them
+  // automatically on unmount).
+  return (
+    <mesh>
+      <boxGeometry args={[1, 1, 1]} />
+      <HolographicMaterial />
+    </mesh>
   );
 }
 
@@ -181,6 +213,7 @@ export function ShaderDiagnostic() {
         >
           <TestHeroBuildings />
           <TestParticleField />
+          <TestHolographic />
         </Canvas>
       </div>
     </div>
